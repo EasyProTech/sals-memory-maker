@@ -540,9 +540,9 @@ echo "4. AWS credentials"
 echo "5. Domain name in Nginx configuration"
 echo ""
 echo "The application should now be running at:"
-echo "Frontend: http://your_domain.com"
-echo "Backend API: http://your_domain.com/api"
-echo "API Documentation: http://your_domain.com/api/docs"
+echo "Frontend: https://books.easyprotech.com"
+echo "Backend API: https://books.easyprotech.com/api"
+echo "API Documentation: https://books.easyprotech.com/api/docs"
 
 # Function to setup frontend
 setup_frontend() {
@@ -660,7 +660,7 @@ server {
 # HTTPS server block
 server {
     listen 443 ssl;
-    server_name ${domain} ${ip_address};
+    server_name ${domain};
     
     # SSL configuration will be added by certbot
     
@@ -749,9 +749,9 @@ EOL
     echo "Checking port status..."
     netstat -tulpn | grep -E ':80|:443|:3000|:8000' || echo "Warning: Port check failed"
     
-    # Obtain SSL certificate
+    # Obtain SSL certificate for domain only
     echo "Obtaining SSL certificate from Let's Encrypt..."
-    certbot --nginx -d ${domain} -d ${ip_address} --non-interactive --agree-tos --email admin@easyprotech.com || handle_error "Failed to obtain SSL certificate"
+    certbot --nginx -d ${domain} --non-interactive --agree-tos --email admin@easyprotech.com || handle_error "Failed to obtain SSL certificate"
     
     # Set up automatic renewal
     echo "Setting up automatic SSL renewal..."
@@ -763,7 +763,7 @@ EOL
     echo "Nginx and SSL setup complete!"
     echo "Your site should now be accessible at:"
     echo "- https://${domain}"
-    echo "- https://${ip_address}"
+    echo "- http://${ip_address} (will redirect to https://${domain})"
     echo "If you still see issues, please check:"
     echo "1. DNS is properly configured for ${domain}"
     echo "2. Ports 80 and 443 are open in your firewall"
