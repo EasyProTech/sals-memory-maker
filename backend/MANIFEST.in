@@ -1,0 +1,7 @@
+include README.md
+include LICENSE
+include requirements.txt
+include alembic.ini
+recursive-include alembic *
+recursive-include tests *
+recursive-include static * 

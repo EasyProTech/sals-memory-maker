@@ -1,0 +1,15 @@
+# These owners will be the default owners for everything in the repo.
+# Unless a later match takes precedence, they will be requested for review when someone opens a pull request.
+* @project-owner
+
+# Backend specific files
+/backend/ @backend-team
+
+# Frontend specific files
+/frontend/ @frontend-team
+
+# Documentation
+/docs/ @docs-team
+
+# GitHub specific files
+/.github/ @project-owner 

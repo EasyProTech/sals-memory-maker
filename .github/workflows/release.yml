@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: commits } = await github.rest.repos.compareCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              base: 'main',
+              head: context.sha
+            });
+            
+            const changelog = commits.commits
+              .map(commit => `- ${commit.commit.message}`)
+              .join('\n');
+            
+            return changelog;
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          release_name: Release ${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## What's Changed
+            
+            ${{ steps.changelog.outputs.result }}
+            
+            ## Installation
+            
+            ```bash
+            # Using Docker
+            docker pull memorymaker/backend:${{ steps.get_version.outputs.VERSION }}
+            docker pull memorymaker/frontend:${{ steps.get_version.outputs.VERSION }}
+            
+            # Manual installation
+            git checkout ${{ steps.get_version.outputs.VERSION }}
+            ```
+            
+            ## Documentation
+            
+            See the [documentation](https://memorymaker.com/docs) for more information.
+          draft: false
+          prerelease: false 
