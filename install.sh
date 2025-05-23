@@ -100,22 +100,28 @@ setup_github_repo() {
     git fetch origin || handle_error "Failed to fetch from remote"
     
     if git ls-remote --heads origin main | grep -q main; then
-        echo "Remote repository has content. Pulling changes..."
-        # Configure git to allow unrelated histories
-        git config pull.rebase false
-        # Pull remote changes
-        git pull origin main --allow-unrelated-histories || handle_error "Failed to pull remote changes"
+        echo "Remote repository has content. Handling merge..."
         
-        # Add all local changes
-        git add . || handle_error "Failed to add files to git"
+        # Create a temporary branch for the remote content
+        git checkout -b temp_remote origin/main || handle_error "Failed to create temporary branch"
         
-        # Commit changes
-        git commit -m "Merge local changes with remote repository" || handle_error "Failed to commit changes"
+        # Switch back to main branch
+        git checkout main || handle_error "Failed to switch back to main branch"
+        
+        # Reset to the state before the merge attempt
+        git reset --hard HEAD || handle_error "Failed to reset to HEAD"
+        
+        # Force push local changes
+        echo "Pushing local changes to GitHub..."
+        git push -f origin main || handle_error "Failed to force push to GitHub"
+        
+        # Clean up temporary branch
+        git branch -D temp_remote || handle_error "Failed to delete temporary branch"
+    else
+        # If no remote content, just push normally
+        echo "Pushing changes to GitHub..."
+        git push -u origin main || handle_error "Failed to push to GitHub"
     fi
-    
-    # Push to GitHub
-    echo "Pushing changes to GitHub..."
-    git push -u origin main || handle_error "Failed to push to GitHub"
     
     echo "GitHub repository setup complete!"
     echo "Repository URL: https://github.com/${org_name}/${repo_name}"

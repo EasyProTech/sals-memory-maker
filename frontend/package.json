@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
   "name": "sals-memory-maker-frontend",
   "version": "0.1.0",
@@ -40,3 +41,36 @@
     "jest-environment-jsdom": "^29.7.0"
   }
 } 
+=======
+{
+  "name": "sals-memory-maker-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.0",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.13.0",
+    "@mui/material": "^5.13.0",
+    "@stripe/stripe-js": "^2.2.0",
+    "next": "13.4.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "axios": "^1.6.2",
+    "qrcode.react": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.0.0",
+    "eslint": "^8.39.0",
+    "eslint-config-next": "13.4.0"
+  }
+}
+>>>>>>> 5289e0916736ab6fb0062a2799ec12e3a9a432e6

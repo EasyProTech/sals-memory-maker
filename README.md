@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Memory Maker
 
 A platform for creating personalized memory books with AI-powered content generation and physical book publishing.
@@ -118,3 +119,32 @@ make docker-down
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
+=======
+# Sal's Memory Maker
+
+A personalized book creation platform that allows users to create custom memory books with various features including audio versions and QR code access.
+
+## Features
+
+- Multiple book types (Photo Books, Story Books, Memory Books)
+- User registration and authentication
+- Payment integration with Stripe
+- Audio book generation
+- QR code access to audio versions
+- Admin dashboard
+- Mobile-responsive design
+
+## Getting Started
+
+See the [Installation Guide](docs/installation.md) for setup instructions.
+
+## Documentation
+
+- [User Guide](docs/user-guide/README.md)
+- [Admin Guide](docs/admin-guide/README.md)
+- [API Documentation](docs/api/README.md)
+
+## License
+
+MIT License
+>>>>>>> 5289e0916736ab6fb0062a2799ec12e3a9a432e6
