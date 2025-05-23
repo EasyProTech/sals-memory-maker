@@ -624,7 +624,8 @@ upload_files() {
 # Function to setup Nginx and SSL
 setup_nginx_and_ssl() {
     local domain="books.easyprotech.com"
-    echo "Setting up Nginx and SSL for $domain..."
+    local ip_address="74.208.201.191"
+    echo "Setting up Nginx and SSL for $domain and $ip_address..."
     
     # Install certbot
     if ! command_exists certbot; then
@@ -632,28 +633,40 @@ setup_nginx_and_ssl() {
         apt install -y certbot python3-certbot-nginx || handle_error "Failed to install certbot"
     fi
     
+    # Remove default Nginx site
+    rm -f /etc/nginx/sites-enabled/default
+    
     # Create Nginx configuration
     echo "Creating Nginx configuration..."
     cat > /etc/nginx/sites-available/sals-memory-maker << EOL
+# IP address server block
+server {
+    listen 80;
+    server_name ${ip_address};
+    
+    # Redirect IP to domain
+    return 301 https://${domain}\$request_uri;
+}
+
+# HTTP server block for domain
 server {
     listen 80;
     server_name ${domain};
     
     # Redirect all HTTP traffic to HTTPS
-    location / {
-        return 301 https://\$host\$request_uri;
-    }
+    return 301 https://\$host\$request_uri;
 }
 
+# HTTPS server block
 server {
     listen 443 ssl;
-    server_name ${domain};
+    server_name ${domain} ${ip_address};
     
     # SSL configuration will be added by certbot
     
     # Frontend
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -662,11 +675,14 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        
+        # Debug headers
+        add_header X-Debug-Message "Frontend proxy" always;
     }
     
     # Backend API
     location /api {
-        proxy_pass http://localhost:8000;
+        proxy_pass http://127.0.0.1:8000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -675,6 +691,9 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+        
+        # Debug headers
+        add_header X-Debug-Message "Backend proxy" always;
     }
     
     # Static files
@@ -682,6 +701,9 @@ server {
         alias /opt/sals-memory-maker/frontend/public;
         expires 30d;
         add_header Cache-Control "public, no-transform";
+        
+        # Debug headers
+        add_header X-Debug-Message "Static files" always;
     }
     
     # Security headers
@@ -697,6 +719,13 @@ server {
     gzip_proxied any;
     gzip_comp_level 6;
     gzip_types text/plain text/css text/xml application/json application/javascript application/xml+rss application/atom+xml image/svg+xml;
+    
+    # Error pages
+    error_page 404 /404.html;
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
 }
 EOL
 
@@ -704,19 +733,40 @@ EOL
     ln -sf /etc/nginx/sites-available/sals-memory-maker /etc/nginx/sites-enabled/ || handle_error "Failed to enable Nginx site"
     
     # Test Nginx configuration
+    echo "Testing Nginx configuration..."
     nginx -t || handle_error "Nginx configuration test failed"
     
     # Restart Nginx
+    echo "Restarting Nginx..."
     systemctl restart nginx || handle_error "Failed to restart Nginx"
+    
+    # Check if services are running
+    echo "Checking service status..."
+    systemctl status nginx || echo "Warning: Nginx service check failed"
+    systemctl status sals-memory-maker || echo "Warning: Backend service check failed"
+    
+    # Check if ports are listening
+    echo "Checking port status..."
+    netstat -tulpn | grep -E ':80|:443|:3000|:8000' || echo "Warning: Port check failed"
     
     # Obtain SSL certificate
     echo "Obtaining SSL certificate from Let's Encrypt..."
-    certbot --nginx -d ${domain} --non-interactive --agree-tos --email admin@easyprotech.com || handle_error "Failed to obtain SSL certificate"
+    certbot --nginx -d ${domain} -d ${ip_address} --non-interactive --agree-tos --email admin@easyprotech.com || handle_error "Failed to obtain SSL certificate"
     
     # Set up automatic renewal
     echo "Setting up automatic SSL renewal..."
     (crontab -l 2>/dev/null; echo "0 0 * * * certbot renew --quiet") | crontab - || handle_error "Failed to set up SSL renewal"
     
+    # Final Nginx restart
+    systemctl restart nginx || handle_error "Failed to restart Nginx after SSL setup"
+    
     echo "Nginx and SSL setup complete!"
-    echo "Your site should now be accessible at: https://${domain}"
+    echo "Your site should now be accessible at:"
+    echo "- https://${domain}"
+    echo "- https://${ip_address}"
+    echo "If you still see issues, please check:"
+    echo "1. DNS is properly configured for ${domain}"
+    echo "2. Ports 80 and 443 are open in your firewall"
+    echo "3. Frontend and backend services are running"
+    echo "4. Nginx error logs: sudo tail -f /var/log/nginx/error.log"
 } 
