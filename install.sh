@@ -95,7 +95,26 @@ setup_github_repo() {
     local token=$(cat ~/.git-credentials | cut -d'@' -f1 | cut -d'/' -f3)
     git remote add origin "https://${token}@github.com/${org_name}/${repo_name}.git" || handle_error "Failed to add remote"
     
+    # Check if remote has content
+    echo "Checking remote repository..."
+    git fetch origin || handle_error "Failed to fetch from remote"
+    
+    if git ls-remote --heads origin main | grep -q main; then
+        echo "Remote repository has content. Pulling changes..."
+        # Configure git to allow unrelated histories
+        git config pull.rebase false
+        # Pull remote changes
+        git pull origin main --allow-unrelated-histories || handle_error "Failed to pull remote changes"
+        
+        # Add all local changes
+        git add . || handle_error "Failed to add files to git"
+        
+        # Commit changes
+        git commit -m "Merge local changes with remote repository" || handle_error "Failed to commit changes"
+    fi
+    
     # Push to GitHub
+    echo "Pushing changes to GitHub..."
     git push -u origin main || handle_error "Failed to push to GitHub"
     
     echo "GitHub repository setup complete!"
